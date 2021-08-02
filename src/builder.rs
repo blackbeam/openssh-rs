@@ -17,6 +17,7 @@ pub struct SessionBuilder {
     known_hosts_check: KnownHosts,
     control_dir: Option<PathBuf>,
     config_file: Option<PathBuf>,
+    v1: bool,
 }
 
 impl Default for SessionBuilder {
@@ -30,6 +31,7 @@ impl Default for SessionBuilder {
             known_hosts_check: KnownHosts::Add,
             control_dir: None,
             config_file: None,
+            v1: false,
         }
     }
 }
@@ -105,6 +107,22 @@ impl SessionBuilder {
         self
     }
 
+    /// Use SSH v1.
+    ///
+    /// **WARNING:** Protocol 1 should not be used and is only offered to support legacy devices.
+    ///
+    /// This is equivalent to `ssh -1`.
+    ///
+    /// # Note
+    ///
+    /// Modern clients may not support it.
+    ///
+    /// Defaults to `false`.
+    pub fn v1(&mut self, v1: bool) -> &mut Self {
+        self.v1 = v1;
+        self
+    }
+
     /// Connect to the host at the given `host` over SSH.
     ///
     /// The format of `destination` is the same as the `destination` argument to `ssh`. It may be
@@ -173,6 +191,7 @@ impl SessionBuilder {
         init.stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
+            .arg(if self.v1 { "-1" } else { "-2" })
             .arg("-S")
             .arg(dir.path().join("master"))
             .arg("-M")
